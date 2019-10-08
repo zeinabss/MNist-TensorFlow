@@ -17,54 +17,11 @@ from PIL import Image
 from scipy import ndimage
 import tensorflow as tf
 from tensorflow.python.framework import ops
+from helper import *
 
 (x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data()
 np.random.seed(1)
 
-#helper Functions
-def random_mini_batches(X, Y, mini_batch_size = 64, seed = 0):
-    """
-    Creates a list of random minibatches from (X, Y)
-    
-    Arguments:
-    X -- input data, of shape (input size, number of examples) (m, Hi, Wi, Ci)
-    Y -- true "label" vector (containing 0 if cat, 1 if non-cat), of shape (1, number of examples) (m, n_y)
-    mini_batch_size - size of the mini-batches, integer
-    seed -- this is only for the purpose of grading, so that you're "random minibatches are the same as ours.
-    
-    Returns:
-    mini_batches -- list of synchronous (mini_batch_X, mini_batch_Y)
-    """
-    
-    m = X.shape[0]                  # number of training examples
-    mini_batches = []
-    np.random.seed(seed)
-    
-    # Step 1: Shuffle (X, Y)
-    permutation = list(np.random.permutation(m))
-    shuffled_X = X[permutation,:,:,:]
-    shuffled_Y = Y[permutation,:]
-
-    # Step 2: Partition (shuffled_X, shuffled_Y). Minus the end case.
-    num_complete_minibatches = math.floor(m/mini_batch_size) # number of mini batches of size mini_batch_size in your partitionning
-    for k in range(0, num_complete_minibatches):
-        mini_batch_X = shuffled_X[k * mini_batch_size : k * mini_batch_size + mini_batch_size,:,:,:]
-        mini_batch_Y = shuffled_Y[k * mini_batch_size : k * mini_batch_size + mini_batch_size,:]
-        mini_batch = (mini_batch_X, mini_batch_Y)
-        mini_batches.append(mini_batch)
-    
-    # Handling the end case (last mini-batch < mini_batch_size)
-    if m % mini_batch_size != 0:
-        mini_batch_X = shuffled_X[num_complete_minibatches * mini_batch_size : m,:,:,:]
-        mini_batch_Y = shuffled_Y[num_complete_minibatches * mini_batch_size : m,:]
-        mini_batch = (mini_batch_X, mini_batch_Y)
-        mini_batches.append(mini_batch)
-    
-    return mini_batches
-  
-def convert_to_one_hot(Y, C):
-    Y = np.eye(C)[Y.reshape(-1)]
-    return Y
 
 # Commented out IPython magic to ensure Python compatibility.
 #display samples of the train dataset
@@ -78,6 +35,7 @@ for i in range(1, columns*rows +1):
     fig.add_subplot(rows, columns, i)
     plt.imshow(x_train[image_index+i],cmap='gray')
 
+    
 #preprocess the datasets
 X_train = x_train/255.
 X_test = x_test/255.
@@ -169,19 +127,14 @@ def model(X_train, Y_train, X_test, Y_test, optimizer='adam', learning_rate = 0.
     n_y = Y_train.shape[1]                            
     costs = []                                        
     
-
     X, Y = create_placeholders(H, W, C, n_y)
-
 
     parameters = initialize_parameters()
 
-    
     Z = forward_propagation(X, parameters)
     
-
     cost =tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits = Z, labels = Y))
 
-    
     if optimizer=='adagrad':
         optimizer = tf.train.AdagradOptimizer(learning_rate = learning_rate).minimize(cost)
     elif optimizer=='adagradda':
@@ -191,10 +144,8 @@ def model(X_train, Y_train, X_test, Y_test, optimizer='adam', learning_rate = 0.
     elif optimizer=='adam':
         optimizer = tf.train.AdamOptimizer(learning_rate = learning_rate).minimize(cost)
 
-        
     init = tf.global_variables_initializer()
-     
-
+   
     with tf.Session() as sess:
 
         sess.run(init)
@@ -238,6 +189,7 @@ def model(X_train, Y_train, X_test, Y_test, optimizer='adam', learning_rate = 0.
         print("Test Accuracy:", test_accuracy)
                 
         return train_accuracy, test_accuracy, parameters
+
 
 train_accuracy, text_accuracy, parameters = model(X_train, Y_train, X_test, Y_test)
 
